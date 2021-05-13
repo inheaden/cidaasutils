@@ -17,7 +17,12 @@ var jwkEnpoint = "/.well-known/jwks.json"
 var TokenInvalid = errors.New("Token is invalid")
 
 type Options struct {
-	BaseURL         string
+	// This is the base url for communicating with Cidaas.
+	// Usually something like https://your-company.cidaas.com
+	BaseURL string
+
+	// Interval how often the JWKs will be refreshed from Cidaas.
+	// Default is one hour.
 	RefreshInterval time.Duration
 }
 

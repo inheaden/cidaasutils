@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-  utils := NewCidaasUtils(&Options{BaseURL: "https://example.com"})
+  utils := cidaasutils.NewCidaasUtils(&cidaasutils.Options{BaseURL: "https://example.cidaas.com"})
   utils.Init()
 
   //...
