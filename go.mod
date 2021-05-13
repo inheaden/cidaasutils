@@ -1,4 +1,4 @@
-module github.com/inheaden/cidaas-utils
+module github.com/inheaden/cidaasUtils
 
 go 1.16
 
