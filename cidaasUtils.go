@@ -1,4 +1,4 @@
-package cidaasUtils
+package cidaasutils
 
 import (
 	"errors"

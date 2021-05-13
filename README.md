@@ -19,7 +19,7 @@ The library depends on these libraries
 import (
   "log"
 
-  "github.com/inheaden/cidaasUtils"
+  "github.com/inheaden/cidaasutils"
 )
 
 func main() {
