@@ -1,8 +1,6 @@
 package cidaasutils
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"time"
 
@@ -10,16 +8,18 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-// Default endpoint for Cidaas JWKs
-var jwkEnpoint = "/.well-known/jwks.json"
-
-// TokenInvalid is returned if the given token is invalid
-var TokenInvalid = errors.New("Token is invalid")
-
 type Options struct {
 	// This is the base url for communicating with Cidaas.
 	// Usually something like https://your-company.cidaas.com
 	BaseURL string
+
+	// App credentials
+	ClientID     string
+	ClientSecret string
+
+	// Credentials for an admin user (used to retrieve an access_token)
+	AdminUsername string
+	AdminPassword string
 
 	// Interval how often the JWKs will be refreshed from Cidaas.
 	// Default is one hour.
@@ -33,19 +33,20 @@ type ICidaasUtils interface {
 
 // CidaasUtils is the main struct for all utils functions.
 type CidaasUtils struct {
-	options *Options
-	jwks    *keyfunc.JWKS
+	options       *Options
+	jwks          *keyfunc.JWKS
+	myAccessToken *jwt.Token
 }
 
 // making sure that the interface is implemented
 var _ ICidaasUtils = &CidaasUtils{}
 
-// NewCidaasUtils creates a new instance of the utils.
-func NewCidaasUtils(options *Options) *CidaasUtils {
+// New creates a new instance of the utils.
+func New(options *Options) *CidaasUtils {
 	return &CidaasUtils{options: options}
 }
 
-// Init initilizes the JWKs and sets up a refresh interval.
+// Init initializes the JWKs and sets up a refresh interval.
 func (u *CidaasUtils) Init() error {
 	refreshInterval := time.Hour
 	if u.options.RefreshInterval != 0 {
@@ -59,7 +60,7 @@ func (u *CidaasUtils) Init() error {
 		},
 	}
 
-	jwks, err := keyfunc.Get(u.buildUrl(jwkEnpoint), options)
+	jwks, err := keyfunc.Get(u.buildUrl(jwkEndpoint), options)
 	if err != nil {
 		return err
 	}
@@ -68,26 +69,7 @@ func (u *CidaasUtils) Init() error {
 	return nil
 }
 
-// InitWithJWKs initilizes the JWKs without needing to talk to a server.
+// InitWithJWKs initializes the JWKs without needing to talk to a server.
 func (u *CidaasUtils) InitWithJWKs(jwks *keyfunc.JWKS) {
 	u.jwks = jwks
-}
-
-// ValidateJWT validates the given jwt and returns the parsed token.
-func (u *CidaasUtils) ValidateJWT(jwtToken string) (*jwt.Token, error) {
-	token, err := jwt.Parse(jwtToken, u.jwks.KeyFunc)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if the token is valid.
-	if !token.Valid {
-		return nil, TokenInvalid
-	}
-	return token, nil
-}
-
-// buildURL builds a url to talk with cidaas
-func (u *CidaasUtils) buildUrl(path string) string {
-	return fmt.Sprintf("%s/%s", u.options.BaseURL, path)
 }
