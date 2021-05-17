@@ -6,16 +6,19 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 // TokenInvalidError is returned if the given token is invalid
 var TokenInvalidError = errors.New("token is invalid")
 
+// CidaasClaimKey Key used for storing the claims on the context
 var CidaasClaimKey = "CIDAAS_CLAIMS"
 
 // ValidateJWT validates the given jwt and returns the parsed token.
 func (u *CidaasUtils) ValidateJWT(jwtToken string) (*jwt.Token, error) {
-	token, err := jwt.ParseWithClaims(jwtToken, &CidaasTokenClaims{}, u.jwks.KeyFunc)
+	token, err := jwt.ParseWithClaims(jwtToken, &jwt.MapClaims{}, u.jwks.KeyFunc)
 	if err != nil {
 		if _, ok := err.(*jwt.ValidationError); ok {
 			return nil, TokenInvalidError
@@ -23,21 +26,22 @@ func (u *CidaasUtils) ValidateJWT(jwtToken string) (*jwt.Token, error) {
 		return nil, err
 	}
 
-	// Check if the token is valid.
-	if !token.Valid {
+	// Check if issuer is valid
+	if !token.Claims.(*jwt.MapClaims).VerifyIssuer(u.options.BaseURL, true) {
 		return nil, TokenInvalidError
 	}
 	return token, nil
 }
 
+// CidaasTokenClaims describe the claims on a given token
 type CidaasTokenClaims struct {
-	Sub        string   `json:"sub,omitempty"`
-	Email      string   `json:"email,omitempty"`
-	Scopes     []string `json:"scopes,omitempty"`
-	Roles      []string `json:"roles,omitempty"`
-	GivenName  string   `json:"given_name,omitempty"`
-	FamilyName string   `json:"family_name,omitempty"`
-	ExpiresAt  int64    `json:"exp,omitempty"`
+	Sub       string   `json:"sub,omitempty"`
+	Email     string   `json:"email,omitempty"`
+	Scopes    []string `json:"scopes,omitempty"`
+	Roles     []string `json:"roles,omitempty"`
+	ExpiresAt int64    `json:"exp,omitempty"`
+	// Other contains all non-standard claims of the token
+	Other jwt.MapClaims
 }
 
 func (c *CidaasTokenClaims) Valid() error {
@@ -48,6 +52,7 @@ func (c *CidaasTokenClaims) Valid() error {
 	return nil
 }
 
+// JWTInterceptorOption can be used to customize the Interceptor
 type JWTInterceptorOption func(option *jwtInterceptorOptions)
 
 type jwtInterceptorOptions struct {
@@ -96,10 +101,12 @@ func (u *CidaasUtils) jwtInterceptor(next http.Handler, option *jwtInterceptorOp
 			writer.WriteHeader(http.StatusUnauthorized)
 			return
 		} else if authorizationHeader == "" {
+			// nothing to parse, continue
 			next.ServeHTTP(writer, request)
 			return
 		}
 
+		// parse and validate token
 		token := strings.TrimPrefix(authorizationHeader, "Bearer ")
 		parsed, err := u.ValidateJWT(token)
 		if err != nil {
@@ -107,22 +114,26 @@ func (u *CidaasUtils) jwtInterceptor(next http.Handler, option *jwtInterceptorOp
 			return
 		}
 
-		claims, ok := parsed.Claims.(*CidaasTokenClaims)
-		if !ok {
+		// create claims
+		claims, err := toCidaasTokenClaims(parsed.Claims)
+		if err != nil {
 			writer.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
+		// verify scopes
 		if len(option.Scopes) > 0 && !includesStrings(claims.Scopes, option.Scopes) {
 			writer.WriteHeader(http.StatusForbidden)
 			return
 		}
 
+		// verify roles
 		if len(option.Roles) > 0 && !includesStrings(claims.Roles, option.Roles) {
 			writer.WriteHeader(http.StatusForbidden)
 			return
 		}
 
+		// attach to context
 		request = request.WithContext(
 			setAuthContext(
 				request.Context(), claims,
@@ -133,11 +144,25 @@ func (u *CidaasUtils) jwtInterceptor(next http.Handler, option *jwtInterceptorOp
 	}
 }
 
+func toCidaasTokenClaims(claims jwt.Claims) (*CidaasTokenClaims, error) {
+	mapClaims := claims.(*jwt.MapClaims)
+	result := &CidaasTokenClaims{}
+
+	err := mapstructure.Decode(claims, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	result.Other = *mapClaims
+
+	return result, nil
+}
+
 func setAuthContext(ctx context.Context, claims *CidaasTokenClaims) context.Context {
 	return context.WithValue(ctx, CidaasClaimKey, claims)
 }
 
-// GetAuthContext returns the CidaasTokenClaims from the request context if it exists.
+// GetAuthContext returns the CidaasTokenClaims from the request context if it exists otherwise nil.
 func GetAuthContext(ctx context.Context) *CidaasTokenClaims {
 	c := ctx.Value(CidaasClaimKey)
 	result, ok := c.(*CidaasTokenClaims)

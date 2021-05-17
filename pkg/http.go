@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-// Default endpoint for Cidaas JWKs
+// Default endpoints
 var jwkEndpoint = ".well-known/jwks.json"
 var userinfoInternalEndpoint = "users-srv/internal/userinfo/profile/{sub}"
 var userUpdateEndpoint = "users-srv/user/{sub}"
@@ -104,8 +104,8 @@ func doRequest(request *http.Request) (*http.Response, error) {
 	if resp.StatusCode >= 300 {
 		defer resp.Body.Close()
 		b, _ := ioutil.ReadAll(resp.Body)
-		log.Printf("error body: %s", string(b))
-		return nil, errors.New(fmt.Sprintf("request to %s was not successful, status code was %d", request.URL, resp.StatusCode))
+		log.Printf("Cidaas Error: error body: %s", string(b))
+		return nil, errors.New(fmt.Sprintf("Cidaas Error: request to %s was not successful, status code was %d", request.URL, resp.StatusCode))
 	}
 
 	return resp, err

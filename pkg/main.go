@@ -2,6 +2,7 @@ package cidaasutils
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/MicahParks/keyfunc"
@@ -29,6 +30,12 @@ type Options struct {
 type ICidaasUtils interface {
 	Init() error
 	ValidateJWT(token string) (*jwt.Token, error)
+	GetUserProfileInternally(sub string) (*UserInfo, error)
+	UpdateUserProfileInternally(sub string, info *UserUpdateRequest) error
+	JWTInterceptor(next http.Handler, options ...JWTInterceptorOption) http.Handler
+	GetMyAccessToken() (*jwt.Token, error)
+	AuthorizationCodeFlow(code string, redirectURL string) (*AccessTokenResult, error)
+	RefreshTokenFlow(refreshToken string) (*AccessTokenResult, error)
 }
 
 // CidaasUtils is the main struct for all utils functions.
