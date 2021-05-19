@@ -33,6 +33,11 @@ func (u *CidaasUtils) ValidateJWT(jwtToken string) (*jwt.Token, error) {
 	return token, nil
 }
 
+// ToCidaasClaims returns claims of the given token
+func (u *CidaasUtils) ToCidaasTokenClaims(jwtToken *jwt.Token) (*CidaasTokenClaims, error) {
+	return toCidaasTokenClaims(jwtToken.Claims)
+}
+
 // CidaasTokenClaims describe the claims on a given token
 type CidaasTokenClaims struct {
 	Sub       string   `json:"sub,omitempty"`
