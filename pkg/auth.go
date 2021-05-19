@@ -38,7 +38,7 @@ func (u *CidaasUtils) GetMyAccessToken() (*jwt.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	accessToken = token
+	u.myAccessToken = token
 	return token, err
 }
 

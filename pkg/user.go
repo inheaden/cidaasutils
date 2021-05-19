@@ -12,6 +12,7 @@ type UserIdentity struct {
 	GivenName    string `json:"given_name"`
 	MobileNumber string `json:"mobile_number"`
 	Locale       string `json:"locale"`
+	Provider     string `json:"provider"`
 }
 
 type CustomField struct {
@@ -22,7 +23,6 @@ type UserInfo struct {
 	Identity     UserIdentity           `json:"identity"`
 	UserAccount  UserAccount            `json:"userAccount"`
 	Roles        []string               `json:"roles"`
-	Groups       []string               `json:"groups"`
 	CustomFields map[string]CustomField `json:"customFields"`
 }
 
@@ -31,13 +31,13 @@ type UserInfoResponse struct {
 }
 
 type UserUpdateRequest struct {
-	Email        string                 `json:"email"`
-	FamilyName   string                 `json:"family_name"`
-	GivenName    string                 `json:"given_name"`
-	MobileNumber string                 `json:"mobile_number"`
-	Provider     string                 `json:"provider"`
-	Locale       string                 `json:"locale"`
-	CustomFields map[string]CustomField `json:"customFields"`
+	Email        *string                 `json:"email"`
+	FamilyName   *string                 `json:"family_name"`
+	GivenName    *string                 `json:"given_name"`
+	MobileNumber *string                 `json:"mobile_number"`
+	Provider     *string                 `json:"provider"`
+	Locale       *string                 `json:"locale"`
+	CustomFields *map[string]CustomField `json:"customFields"`
 }
 
 type SimpleStatusResponse struct {

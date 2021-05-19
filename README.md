@@ -27,7 +27,7 @@ import (
 )
 
 func main() {
-  utils := cidaasutils.NewCidaasUtils(&cidaasutils.Options{BaseURL: "https://example.cidaas.com"})
+  utils := cidaasutils.New(&cidaasutils.Options{BaseURL: "https://example.cidaas.com"})
   utils.Init()
 
   //...
