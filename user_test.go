@@ -18,7 +18,8 @@ func TestCidaasUtils_GetUserProfileInternally(t *testing.T) {
 func TestCidaasUtils_UpdateUserProfileInternally(t *testing.T) {
 	utils := initTests()
 
+	provider := "self"
 	err := utils.UpdateUserProfileInternally("fc7cc753-b137-455a-8b01-96165e05dd01",
-		&UserUpdateRequest{Provider: "self"})
+		&UserUpdateRequest{Provider: &provider})
 	assert.Nil(t, err)
 }
