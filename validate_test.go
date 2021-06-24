@@ -110,6 +110,23 @@ func TestCidaasUtils_JWTInterceptor_NoAuth(t *testing.T) {
 	assert.Equal(t, 200, w.Result().StatusCode)
 }
 
+func TestCidaasUtils_JWTInterceptor_DifferentAuth(t *testing.T) {
+	utils := mockUtils()
+
+	// Create a response recorder
+	w := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("GET", "", nil)
+	req.Header.Add("Authorization", "Basic dGVzdDp0ZXN0")
+
+	// Create the service and process the above request.
+	utils.JWTInterceptor(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(200)
+	})).ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Result().StatusCode)
+}
+
 func TestCidaasUtils_JWTInterceptor_RejectNoAuth(t *testing.T) {
 	utils := mockUtils()
 

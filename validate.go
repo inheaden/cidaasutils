@@ -105,7 +105,7 @@ func (u *CidaasUtils) jwtInterceptor(next http.Handler, option *jwtInterceptorOp
 		if (authorizationHeader == "" || !strings.HasPrefix(authorizationHeader, "Bearer ")) && option.RejectUnauthorized {
 			writer.WriteHeader(http.StatusUnauthorized)
 			return
-		} else if authorizationHeader == "" {
+		} else if authorizationHeader == "" || !strings.HasPrefix(authorizationHeader, "Bearer "){
 			// nothing to parse, continue
 			next.ServeHTTP(writer, request)
 			return
